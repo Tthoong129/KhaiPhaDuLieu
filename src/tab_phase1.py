@@ -2,20 +2,30 @@ import gradio as gr
 import numpy as np
 from PIL import Image
 
-LABELS = ['Baked Potato', 'Burger', 'Crispy Chicken', 'Donut', 'Fries', 
-          'Hot Dog', 'Pizza', 'Sandwich', 'Taco', 'Taquito']
+LABELS = [
+    'Baked Potato', 'Burger', 'Crispy Chicken', 'Donut', 'Fries', 
+    'Hot Dog', 'Pizza', 'Sandwich', 'Taco', 'Taquito'
+]
 
 def render_tab_phase1(model):
-    def predict(img):
-        if img is None or model is None: return {"Lỗi": 0.0}
-        img_array = np.expand_dims(np.array(Image.fromarray(img).resize((150, 150))), axis=0)
-        preds = model.predict(img_array, verbose=0)[0]
-        return {LABELS[i]: float(preds[i]) for i in range(10)}
+    def handle_prediction(input_img):
+        if input_img is None or model is None:
+            return {"Lỗi hệ thống": 0.0}
+        processed_img = Image.fromarray(input_img).resize((150, 150))
+        img_array = np.expand_dims(np.array(processed_img), axis=0)
+        predictions = model.predict(img_array, verbose=0)[0]
+        return {LABELS[i]: float(predictions[i]) for i in range(len(LABELS))}
 
-    gr.Markdown("Mô hình cơ bản (Baseline CNN) sử dụng dữ liệu gốc không qua tăng cường.")
     with gr.Row():
-        img_input = gr.Image(label="Ảnh đầu vào")
-        res_output = gr.Label(label="Kết quả dự đoán", num_top_classes=3)
-    btn = gr.Button("Phân loại (Phase 1)")
-    
-    btn.click(fn=predict, inputs=img_input, outputs=res_output)
+        with gr.Column(scale=1):
+            src_image = gr.Image(label="Ảnh đầu vào (Gốc)", type="numpy")
+            predict_btn = gr.Button("Phân loại (Baseline)", variant="primary")
+            
+        with gr.Column(scale=1):
+            result_label = gr.Label(label="Top 3 dự đoán", num_top_classes=3)
+
+    predict_btn.click(
+        fn=handle_prediction, 
+        inputs=src_image, 
+        outputs=result_label
+    )
