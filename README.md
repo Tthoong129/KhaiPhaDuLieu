@@ -33,7 +33,7 @@ $$J = \sum_{j=1}^{k} \sum_{i=1}^{n_j} ||x_i^{(j)} - c_j||^2$$
 * **Phase 3 (Advanced Aug):** Đẩy cấp độ lên cao hơn bằng cách dùng các thuật toán nâng cao như MixUp/CutMix (tiên tiến trong 5 năm gần đây) để tối ưu mô hình.
 * **Phase 4 & 5 (App & Analysis):** Tích hợp tất cả vào Web App. Ứng dụng không chỉ dự đoán món ăn mà còn show ảnh đó thuộc Cluster số mấy. Kết quả được đánh giá chéo qua biểu đồ Loss/Accuracy và Confusion Matrix.
 
-> **Tiến độ hiện tại:** Phase 1 và Phase 2 đã hoàn thành. Web app đã chạy được với các tính năng của 2 phase này. Phase 3–5 đang tiếp tục phát triển.
+> **Tiến độ hiện tại:** Phase 1-3 đã hoàn thành. Web app đã chạy được với các tính năng của 3 phase này. Phase 4–5 đang tiếp tục phát triển.
 
 ---
 
@@ -47,6 +47,7 @@ Do_An_Khai_Pha_Du_Lieu/
  ┃ ┣ augmentor.py                # Thuật toán tăng cường dữ liệu
  ┃ ┣ tab_phase1.py               # Module chạy Baseline
  ┃ ┣ tab_phase2.py               # Module chạy Model Nâng cao
+ ┃ ┣ tab_phase3.py               # Module chạy Model CutMix 
  ┃ ┣ tab_augmentation.py         # Module demo sinh ảnh trực tiếp
  ┃ ┗ app_main.py                 # File gốc để chạy web (Gradio)
  ┣ README.md                     # Tài liệu hướng dẫn
@@ -56,5 +57,5 @@ Do_An_Khai_Pha_Du_Lieu/
 ---
 
 ## 5. Cài đặt thư viện
-pip install tensorflow scikit-learn gradio numpy pillow matplotlib
+pip install tensorflow scikit-learn gradio numpy pillow matplotlib torch 
 
