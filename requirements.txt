@@ -1,0 +1,8 @@
+tensorflow
+gradio
+numpy
+pillow
+scikit-learn
+joblib
+matplotlib
+kagglehub
