@@ -6,6 +6,7 @@ from augmentor import get_augmentation_model
 from tab_phase1 import render_tab_phase1
 from tab_phase2 import render_tab_phase2
 from tab_phase3 import render_tab_phase3
+from tab_mosaic import render_tab_mosaic
 from tab_augmentation import render_tab_augmentation
 import torch
 import torchvision.models as models
@@ -14,7 +15,8 @@ import torchvision.models as models
 current_dir = os.path.dirname(os.path.abspath(__file__))
 path_p1 = os.path.join(current_dir, '../models/baseline_model_p1.keras')
 path_p2 = os.path.join(current_dir, '../models/augmented_model_p2.keras')
-path_p3 = os.path.join(current_dir, '../models/AI_FastFood_CutMix.pth')
+path_p3 = os.path.join(current_dir, '../models/AI_FastFood_CutMix1.pth')
+path_mosaic = os.path.join(current_dir, '../models/fastfood_resnet18_mosaic.pth')
 
 try:
     model_p1 = tf.keras.models.load_model(path_p1)
@@ -25,9 +27,14 @@ try:
     model_p3 = models.resnet18(num_classes=10)
     model_p3.load_state_dict(torch.load(path_p3, map_location=torch.device('cpu')))
     model_p3.eval()
+
+    # Nap model PyTorch Mosaic
+    model_mosaic = models.resnet18(num_classes=10)
+    model_mosaic.load_state_dict(torch.load(path_mosaic, map_location=torch.device('cpu')))
+    model_mosaic.eval()
 except Exception as e:
     print(f"Lỗi hệ thống - Không thể nạp mô hình: {e}")
-    model_p1, model_p2, model_p3, aug_tool = None, None, None, None
+    model_p1, model_p2, model_p3, model_mosaic, aug_tool = None, None, None, None, None
 
 
 custom_theme = gr.themes.Default(
@@ -55,6 +62,9 @@ with gr.Blocks(theme=custom_theme, title="Food Classification System") as app:
 
     with gr.Tab("Phase 3: CutMix"):
         render_tab_phase3(model_p3)
+
+    with gr.Tab("Phase 4: Mosaic"):
+        render_tab_mosaic(model_mosaic)
 
     with gr.Tab("Data Augmentation Tool"):
         render_tab_augmentation(aug_tool)
