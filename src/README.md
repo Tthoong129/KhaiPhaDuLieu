@@ -1,57 +1,60 @@
-# ĐỒ ÁN: PHÂN LOẠI VÀ TĂNG CƯỜNG DỮ LIỆU ẢNH THỰC PHẨM
-**Học phần:** Khai phá dữ liệu (Data Mining)  
-**Đề tài 5:** Xây dựng ứng dụng tăng cường dữ liệu ảnh  
-**Dataset:** Fast Food Data (10 nhãn lớp)
+# Đồ án: Phân loại và Tăng cường Dữ liệu Ảnh Thực phẩm
+
+**Đề tài 5:** Xây dựng ứng dụng tăng cường dữ liệu ảnh
 
 ---
 
 ## 1. Giới thiệu tổng quan
-Dự án tập trung vào việc tối ưu hóa khả năng nhận diện hình ảnh thông qua các kỹ thuật tăng cường dữ liệu (Data Augmentation) và phân tích cấu trúc dữ liệu bằng thuật toán phân cụm (Clustering). Hệ thống được xây dựng trên nền tảng mạng nơ-ron tích chập (CNN) và giao diện tương tác Gradio.
+
+Repository này chứa mã nguồn và báo cáo cho đồ án môn Khai phá dữ liệu. Mục tiêu của dự án là giải quyết bài toán: **Làm sao để mô hình nhận diện học tốt hơn khi dữ liệu bị hạn chế?** Thay vì chỉ train một mạng nơ-ron nhận diện 10 loại thức ăn nhanh (Fast Food) thông thường, dự án đi sâu vào việc áp dụng kỹ thuật Tăng cường dữ liệu (Data Augmentation) để làm phong phú tập huấn luyện, đồng thời dùng thuật toán Phân cụm (Clustering) để gom nhóm và phân tích độ tương đồng của dữ liệu ảnh.
 
 ---
 
-## 2. Vai trò của các thành phần (P2, P4)
+## 2. Nền tảng lý thuyết
 
-| Thành phần | Vai trò | Chức năng cụ thể |
-| :--- | :--- | :--- |
-| **CNN Model** | **Chủ đạo** | Thực hiện phân loại ảnh thực phẩm dựa trên các đặc trưng học được từ tập dữ liệu. |
-| **K-Means** | **Hỗ trợ (Support)** | Sử dụng Feature Vector từ Phase 1 để gom nhóm ảnh. Giúp phân tích độ tương đồng và các trường hợp mô hình dự đoán nhầm. |
-| **Augmentation** | **Tăng cường** | Áp dụng cơ chế **On-the-fly** (biến đổi ngay khi train) để tăng tính tổng quát hóa, chống hiện tượng Overfitting. |
+Dự án được xây dựng dựa trên 3 khối kiến thức chính:
 
----
+* **Mạng Nơ-ron Tích chập (CNN):** Đóng vai trò là "bộ não" phân loại. Mạng dùng các màng lọc (Convolution) để tự động rút trích các góc cạnh, màu sắc đặc trưng của món ăn.
+* **Tăng cường dữ liệu (Data Augmentation):** Khi số lượng ảnh ít, AI rất dễ bị "học vẹt" (Overfitting). Kỹ thuật này sinh ra các phiên bản ảnh mới (lật ngang, xoay nghiêng, phóng to...) ngay trong lúc train để ép AI học tổng quát hơn.
+* **Phân cụm K-Means (Clustering):** Thuật toán gom nhóm không giám sát. K-Means tối thiểu hóa tổng bình phương khoảng cách từ các bức ảnh đến tâm của cụm (Hàm mục tiêu WCSS):
 
-## 3. Cơ sở lý thuyết và Công thức (P2, P3)
+$$J = \sum_{j=1}^{k} \sum_{i=1}^{n_j} ||x_i^{(j)} - c_j||^2$$
 
-### 3.1. Phân cụm K-Means (Support Layer)
-Thuật toán tối thiểu hóa tổng bình phương sai số (SSE) dựa trên khoảng cách Euclidean:
-$$SSE = \sum_{j=1}^{k} \sum_{x \in C_j} \|x - c_j\|^2$$
-
-### 3.2. Kỹ thuật Tăng cường dữ liệu
-* **Cơ bản (Phase 2):** Bao gồm các phép biến đổi hình học như Flip, Rotate, và Crop. Ma trận xoay ảnh góc $\theta$:
-$$\begin{bmatrix} x' \\ y' \end{bmatrix} = \begin{bmatrix} \cos\theta & -\sin\theta \\ \sin\theta & \cos\theta \end{bmatrix} \begin{bmatrix} x \\ y \end{bmatrix}$$
-* **Nâng cao (Phase 3):** Áp dụng **MixUp** - kết hợp hai hình ảnh ngẫu nhiên để tạo ra dữ liệu mới:
-$$\tilde{x} = \lambda x_i + (1 - \lambda) x_j$$
+  Trong đồ án, K-Means đóng vai trò là "Support Layer". Nó gom các ảnh có chung tone màu hoặc góc chụp vào một cụm để giúp phân tích lý do tại sao mạng CNN lại đoán nhầm.
 
 ---
 
-## 4. Quy trình thực hiện (Pipeline)
+## 3. Quá trình thực hiện (Pipeline)
 
-* **Phase 1 (Baseline):** Chuẩn hóa (Normalize), Resize (150x150) và huấn luyện CNN thuần (không Augmentation). Trích xuất Feature Vector từ lớp ẩn.
-* **Phase 2 (Clustering & Basic Aug):** Phân cụm đặc trưng bằng K-Means. Xây dựng module Augmentation "On-the-fly" với các phép biến đổi cơ bản.
-* **Phase 3 (Advanced Aug):** Triển khai kỹ thuật nâng cao (MixUp/CutMix). Thực hiện đánh giá so sánh hiệu năng qua biểu đồ Loss và Accuracy giữa các Phase.
-* **Phase 4 (App Integration):** Tích hợp Model vào ứng dụng Gradio. Hiển thị thông tin dự đoán kèm theo định danh Cluster để phân tích sâu.
-* **Phase 5 (Analysis):** Tổng hợp báo cáo, đánh giá dựa trên Confusion Matrix và so sánh trực quan giữa các kịch bản huấn luyện.
+*(Để kết quả đánh giá khách quan nhất, tất cả mô hình ở các Phase đều được cấu hình chung số lượng Epochs và Batch Size).*
+
+* **Phase 1 (Baseline):** Tiền xử lý tập data Kaggle (resize `150x150`, chia tỷ lệ 400 Train - 100 Valid - 100 Test). Train một mạng CNN thuần túy làm mốc so sánh. Lớp cuối của mạng này được dùng để rút trích Vector đặc trưng.
+* **Phase 2 (Clustering & Basic Aug):** Dùng K-Means phân cụm các vector đặc trưng từ Phase 1 thành 10 nhóm. Song song đó, viết một Module Augmentation dùng chung (On-the-fly) với các phép biến đổi cơ bản (Flip, Rotate...) để train một mạng Deep CNN sâu hơn.
+* **Phase 3 (Advanced Aug):** Đẩy cấp độ lên cao hơn bằng cách dùng các thuật toán nâng cao như MixUp/CutMix (tiên tiến trong 5 năm gần đây) để tối ưu mô hình.
+* **Phase 4 & 5 (App & Analysis):** Tích hợp tất cả vào Web App. Ứng dụng không chỉ dự đoán món ăn mà còn show ảnh đó thuộc Cluster số mấy. Kết quả được đánh giá chéo qua biểu đồ Loss/Accuracy và Confusion Matrix.
+
+> **Tiến độ hiện tại:** Phase 1 và Phase 2 đã hoàn thành. Web app đã chạy được với các tính năng của 2 phase này. Phase 3–5 đang tiếp tục phát triển.
 
 ---
 
-## 5. Cấu trúc thư mục
+## 4. Cấu trúc thư mục
+
 ```text
 Do_An_Khai_Pha_Du_Lieu/
- ┣ models/                       # Chứa file mô hình (.keras) và K-Means (.pkl)
+ ┣ models/                       # Nơi chứa file model (.keras) và file K-Means (.pkl)
+ ┣ notebooks/                    # Source code quá trình train trên Google Colab
  ┣ src/                          # Mã nguồn ứng dụng Web
- ┃ ┣ augmentor.py                # Module Augmentation dùng chung
- ┃ ┣ tab_phase1.py               # Giao diện kiểm thử Baseline
- ┃ ┣ tab_phase2.py               # Giao diện kiểm thử Advanced Model
- ┃ ┣ tab_augmentation.py         # Demo trực quan hóa sinh ảnh
- ┃ ┗ app_main.py                 # File thực thi chính khởi chạy Gradio
- ┗ README.md                     # Tài liệu hướng dẫn
+ ┃ ┣ augmentor.py                # Thuật toán tăng cường dữ liệu
+ ┃ ┣ tab_phase1.py               # Module chạy Baseline
+ ┃ ┣ tab_phase2.py               # Module chạy Model Nâng cao
+ ┃ ┣ tab_augmentation.py         # Module demo sinh ảnh trực tiếp
+ ┃ ┗ app_main.py                 # File gốc để chạy web (Gradio)
+ ┣ README.md                     # Tài liệu hướng dẫn
+ ┗ requirements.txt              # Danh sách thư viện
+```
+
+---
+
+## 5. Cài đặt thư viện
+pip install tensorflow scikit-learn gradio numpy pillow matplotlib
+
