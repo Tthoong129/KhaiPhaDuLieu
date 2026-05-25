@@ -1,8 +1,26 @@
 import os
-import tensorflow as tf
 import gradio as gr
 
-from augmentor import get_augmentation_model
+try:
+    import tensorflow as tf
+    # Cấu hình để TensorFlow không chiếm hết VRAM GPU
+    gpus = tf.config.list_physical_devices('GPU')
+    if gpus:
+        try:
+            for gpu in gpus:
+                tf.config.experimental.set_memory_growth(gpu, True)
+        except Exception as gpu_err:
+            print(f"Canh bao: Khong the cau hinh GPU memory growth: {gpu_err}")
+except Exception as e:
+    tf = None
+    print(f"Canh bao: Khong the nap thu vien TensorFlow/Keras. Cac tab Baseline, Augmented va Augmentation Tool se khong hoat dong. Chi tiet: {e}")
+
+try:
+    from augmentor import get_augmentation_model
+except Exception as e:
+    get_augmentation_model = None
+    print(f"Canh bao: Khong the nap module augmentor. Chi tiet: {e}")
+
 from tab_phase1 import render_tab_phase1
 from tab_phase2 import render_tab_phase2
 from tab_phase3 import render_tab_phase3
@@ -18,23 +36,65 @@ path_p2 = os.path.join(current_dir, '../models/augmented_model_p2.keras')
 path_p3 = os.path.join(current_dir, '../models/AI_FastFood_CutMix1.pth')
 path_mosaic = os.path.join(current_dir, '../models/fastfood_resnet18_mosaic.pth')
 
-try:
-    model_p1 = tf.keras.models.load_model(path_p1)
-    model_p2 = tf.keras.models.load_model(path_p2)
-    aug_tool = get_augmentation_model()
-    
-    # Nap model PyTorch Phase 3
-    model_p3 = models.resnet18(num_classes=10)
-    model_p3.load_state_dict(torch.load(path_p3, map_location=torch.device('cpu')))
-    model_p3.eval()
+model_p1 = None
+model_p2 = None
+aug_tool = None
+model_p3 = None
+model_mosaic = None
 
-    # Nap model PyTorch Mosaic
-    model_mosaic = models.resnet18(num_classes=10)
-    model_mosaic.load_state_dict(torch.load(path_mosaic, map_location=torch.device('cpu')))
-    model_mosaic.eval()
-except Exception as e:
-    print(f"Lỗi hệ thống - Không thể nạp mô hình: {e}")
-    model_p1, model_p2, model_p3, model_mosaic, aug_tool = None, None, None, None, None
+# Nạp model Phase 1
+if tf is not None and os.path.exists(path_p1):
+    try:
+        model_p1 = tf.keras.models.load_model(path_p1)
+        print("Da nap thanh cong mo hinh Phase 1: Baseline")
+    except Exception as e:
+        print(f"Loi nap mo hinh Phase 1: {e}")
+else:
+    print("Bo qua nap mo hinh Phase 1 (thieu file model hoac tensorflow)")
+
+# Nạp model Phase 2
+if tf is not None and os.path.exists(path_p2):
+    try:
+        model_p2 = tf.keras.models.load_model(path_p2)
+        print("Da nap thanh cong mo hinh Phase 2: Augmented")
+    except Exception as e:
+        print(f"Loi nap mo hinh Phase 2: {e}")
+else:
+    print("Bo qua nap mo hinh Phase 2 (thieu file model hoac tensorflow)")
+
+# Nạp model Augmentation Tool
+if tf is not None and get_augmentation_model is not None:
+    try:
+        aug_tool = get_augmentation_model()
+        print("Da nap thanh cong mo hinh Augmentation Tool")
+    except Exception as e:
+        print(f"Loi nap mo hinh Augmentation Tool: {e}")
+else:
+    print("Bo qua nap Augmentation Tool (thieu module hoac tensorflow)")
+
+# Nạp model PyTorch Phase 3
+if os.path.exists(path_p3):
+    try:
+        model_p3 = models.resnet18(num_classes=10)
+        model_p3.load_state_dict(torch.load(path_p3, map_location=torch.device('cpu')))
+        model_p3.eval()
+        print("Da nap thanh cong mo hinh Phase 3: CutMix")
+    except Exception as e:
+        print(f"Loi nap mo hinh Phase 3: {e}")
+else:
+    print(f"Bo qua nap mo hinh Phase 3 (khong tim thay file tai {path_p3})")
+
+# Nạp model PyTorch Mosaic
+if os.path.exists(path_mosaic):
+    try:
+        model_mosaic = models.resnet18(num_classes=10)
+        model_mosaic.load_state_dict(torch.load(path_mosaic, map_location=torch.device('cpu')))
+        model_mosaic.eval()
+        print("Da nap thanh cong mo hinh Phase 4: Mosaic")
+    except Exception as e:
+        print(f"Loi nap mo hinh Phase 4: {e}")
+else:
+    print(f"Bo qua nap mo hinh Phase 4 (khong tim thay file tai {path_mosaic})")
 
 
 custom_theme = gr.themes.Default(

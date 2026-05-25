@@ -9,12 +9,17 @@ LABELS = [
 
 def render_tab_phase1(model):
     def handle_prediction(input_img):
-        if input_img is None or model is None:
-            return {"Lỗi hệ thống": 0.0}
-        processed_img = Image.fromarray(input_img).resize((150, 150))
-        img_array = np.expand_dims(np.array(processed_img), axis=0)
-        predictions = model.predict(img_array, verbose=0)[0]
-        return {LABELS[i]: float(predictions[i]) for i in range(len(LABELS))}
+        if model is None:
+            return {"Lỗi: Mô hình Baseline chưa được nạp": 0.0}
+        if input_img is None:
+            return {"Lỗi: Vui lòng tải ảnh lên trước khi phân loại": 0.0}
+        try:
+            processed_img = Image.fromarray(input_img).resize((150, 150))
+            img_array = np.expand_dims(np.array(processed_img), axis=0)
+            predictions = model.predict(img_array, verbose=0)[0]
+            return {LABELS[i]: float(predictions[i]) for i in range(len(LABELS))}
+        except Exception as e:
+            return {f"Lỗi suy luận: {str(e)}": 0.0}
 
     with gr.Row():
         with gr.Column(scale=1):
