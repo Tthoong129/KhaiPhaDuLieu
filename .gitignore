@@ -1,9 +1,40 @@
+# Python virtual environments
+KPDL/
+venv/
+venv310/
+venv311/
+.venv/
+env/
 
+# Python cache
 __pycache__/
 *.py[cod]
 *$py.class
-venv/
-env/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# VS Code
+.vscode/
+
+# Environment variables
 .env
+
+# OS files
 .DS_Store
 Thumbs.db
+
+# Test/temp files
+src/test_kmeans.py
+test_kmeans.py
+debug_*.py
+temp_*.py
+
+# Logs
+*.log
+Data
+Data_Cluster_Augmented/
+Data_Cluster_CutMix_Demo/
+Data_Cluster_Mosaic/
+outputs/cluster_assignments.csv
+outputs/cluster_guided_cutmix_metadata.csv

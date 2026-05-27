@@ -1,5 +1,7 @@
 import os
 import gradio as gr
+import joblib
+import numpy as np
 
 try:
     import tensorflow as tf
@@ -26,6 +28,7 @@ from tab_phase2 import render_tab_phase2
 from tab_phase3 import render_tab_phase3
 from tab_mosaic import render_tab_mosaic
 from tab_augmentation import render_tab_augmentation
+from tab_final_app import render_tab_final_app
 import torch
 import torchvision.models as models
 
@@ -35,12 +38,15 @@ path_p1 = os.path.join(current_dir, '../models/baseline_model_p1.keras')
 path_p2 = os.path.join(current_dir, '../models/augmented_model_p2.keras')
 path_p3 = os.path.join(current_dir, '../models/AI_FastFood_CutMix1.pth')
 path_mosaic = os.path.join(current_dir, '../models/fastfood_resnet18_mosaic.pth')
+path_kmeans = os.path.join(current_dir, '../models/kmeans_model.pkl')
 
 model_p1 = None
 model_p2 = None
 aug_tool = None
 model_p3 = None
 model_mosaic = None
+kmeans_model = None
+feature_extractor = None
 
 # Nạp model Phase 1
 if tf is not None and os.path.exists(path_p1):
@@ -51,6 +57,40 @@ if tf is not None and os.path.exists(path_p1):
         print(f"Loi nap mo hinh Phase 1: {e}")
 else:
     print("Bo qua nap mo hinh Phase 1 (thieu file model hoac tensorflow)")
+
+if model_p1 is not None and tf is not None:
+    try:
+        
+        # Tạo feature extractor bằng cách bỏ lớp cuối softmax
+        # Model gốc: ... -> Dense(128) -> Dense(10, softmax)
+        # K-Means cần vector 128 chiều nên lấy output trước lớp cuối
+        feature_extractor = tf.keras.Sequential(
+            model_p1.layers[:-1],
+            name="feature_extractor_p1"
+        )
+
+        # Gọi thử bằng ảnh giả để build model
+        dummy_input = np.zeros((1, 150, 150, 3), dtype=np.float32)
+        dummy_feature = feature_extractor.predict(dummy_input, verbose=0)
+
+        print(f"Da tao feature extractor tu Phase 1, output shape: {dummy_feature.shape}")
+
+    except Exception as e:
+        print(f"Loi tao feature extractor tu Phase 1: {e}")
+
+
+if os.path.exists(path_kmeans):
+    try:
+        kmeans_model = joblib.load(path_kmeans)
+        print("Da nap thanh cong K-Means model")
+
+        if hasattr(kmeans_model, "n_features_in_"):
+            print(f"K-Means yeu cau feature vector {kmeans_model.n_features_in_} chieu")
+
+    except Exception as e:
+        print(f"Loi nap K-Means model: {e}")
+else:
+    print(f"Khong tim thay K-Means model tai {path_kmeans}")
 
 # Nạp model Phase 2
 if tf is not None and os.path.exists(path_p2):
@@ -128,6 +168,14 @@ with gr.Blocks(theme=custom_theme, title="Food Classification System") as app:
 
     with gr.Tab("Data Augmentation Tool"):
         render_tab_augmentation(aug_tool)
+
+    with gr.Tab("Final Application"):
+        render_tab_final_app(model_p1,
+        model_p2,
+        model_p3,
+        model_mosaic,
+        kmeans_model,
+        feature_extractor)
 
 if __name__ == "__main__":
     app.launch()
