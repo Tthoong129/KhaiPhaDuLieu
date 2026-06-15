@@ -29,6 +29,8 @@ from tab_phase3 import render_tab_phase3
 from tab_mosaic import render_tab_mosaic
 from tab_augmentation import render_tab_augmentation
 from tab_final_app import render_tab_final_app
+from tab_batch_inference import render_tab_batch_inference
+from tab_batch_augmentation import render_tab_batch_augmentation
 import torch
 import torchvision.models as models
 
@@ -176,6 +178,12 @@ with gr.Blocks(theme=custom_theme, title="Food Classification System") as app:
         model_mosaic,
         kmeans_model,
         feature_extractor)
+
+    with gr.Tab("Batch Inference"):
+        render_tab_batch_inference(model_p1, model_p2, model_p3, model_mosaic, kmeans_model, feature_extractor)
+
+    with gr.Tab("Trạm Tăng Cường Dữ Liệu"):
+        render_tab_batch_augmentation()
 
 if __name__ == "__main__":
     app.launch()
